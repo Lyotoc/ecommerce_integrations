@@ -215,20 +215,18 @@ class SPAPI:
 
 	def __init__(
 		self,
-		iam_arn: str,
 		client_id: str,
 		client_secret: str,
 		refresh_token: str,
-		aws_access_key: str,
-		aws_secret_key: str,
 		country_code: str = "US",
 	) -> None:
-		self.iam_arn = iam_arn
+		conf = frappe.conf.get("amazon_sp_api", {})
+		self.iam_arn = conf.get("iam_arn")
+		self.aws_access_key = conf.get("aws_access_key")
+		self.aws_secret_key = conf.get("aws_secret_key")
 		self.client_id = client_id
 		self.client_secret = client_secret
 		self.refresh_token = refresh_token
-		self.aws_access_key = aws_access_key
-		self.aws_secret_key = aws_secret_key
 		self.country_code = country_code
 		self.region, self.endpoint, self.marketplace_id = Util.get_marketplace_data(country_code)
 
