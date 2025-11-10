@@ -153,11 +153,10 @@ class AmazonRepository:
 
 	def create_item(self, order_item) -> str:
 		def create_item_group(amazon_item) -> str:
-			item_group_name = amazon_item.get("AttributeSets")[0].get("ProductGroup")
+			item_group_name = amazon_item.get("productTypes", [{}])[0].get("productType")
 
 			if item_group_name:
 				item_group = frappe.db.get_value("Item Group", filters={"item_group_name": item_group_name})
-
 				if not item_group:
 					new_item_group = frappe.new_doc("Item Group")
 					new_item_group.item_group_name = item_group_name
@@ -165,11 +164,10 @@ class AmazonRepository:
 					new_item_group.insert()
 					return new_item_group.item_group_name
 				return item_group
-
 			raise (KeyError("ProductGroup"))
 
 		def create_brand(amazon_item) -> str:
-			brand_name = amazon_item.get("AttributeSets")[0].get("Brand")
+			brand_name = amazon_item.get("attributes", {}).get("brand", [{}])[0].get("value")
 
 			if not brand_name:
 				return
@@ -184,31 +182,18 @@ class AmazonRepository:
 			return existing_brand
 
 		def create_manufacturer(amazon_item) -> str:
-			manufacturer_name = amazon_item.get("AttributeSets")[0].get("Manufacturer")
+			manufacturer_name = amazon_item.get("attributes", {}).get("manufacturer", [{}])[0].get("value")
 
 			if not manufacturer_name:
 				return
-
-			existing_manufacturer = frappe.db.get_value(
-				"Manufacturer", filters={"short_name": manufacturer_name}
-			)
-
-			if not existing_manufacturer:
-				manufacturer = frappe.new_doc("Manufacturer")
-				manufacturer.short_name = manufacturer_name
-				manufacturer.insert()
-				return manufacturer.short_name
-			return existing_manufacturer
-
 		def create_item_price(amazon_item, item_code) -> None:
 			item_price = frappe.new_doc("Item Price")
 			item_price.price_list = self.amz_setting.price_list
 			item_price.price_list_rate = (
-				amazon_item.get("AttributeSets")[0].get("ListPrice", {}).get("Amount") or 0
+				amazon_item.get("attributes", {}).get("list_price", [{}])[0].get("value", 0) or 0
 			)
 			item_price.item_code = item_code
 			item_price.insert()
-
 		def create_ecommerce_item(order_item, item_code) -> None:
 			ecommerce_item = frappe.new_doc("Ecommerce Item")
 			ecommerce_item.integration = frappe.get_meta("Amazon SP API Settings").module
@@ -218,7 +203,7 @@ class AmazonRepository:
 			ecommerce_item.insert(ignore_permissions=True)
 
 		catalog_items = self.get_catalog_items_instance()
-		amazon_item = catalog_items.get_catalog_item(order_item["ASIN"])["payload"]
+		amazon_item = catalog_items.get_catalog_item(order_item["ASIN"])
 
 		item = frappe.new_doc("Item")
 
