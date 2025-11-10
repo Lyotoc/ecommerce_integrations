@@ -495,9 +495,6 @@ def validate_amazon_sp_api_credentials(**args) -> None:
 		# validate client_id, client_secret and refresh_token.
 		api.get_access_token()
 
-		# validate aws_access_key, aws_secret_key, region and iam_arn.
-		api.get_auth()
-
 	except SPAPIError as e:
 		msg = f"<b>Error:</b> {e.error}<br/><b>Error Description:</b> {e.error_description}"
 		frappe.throw(msg)
