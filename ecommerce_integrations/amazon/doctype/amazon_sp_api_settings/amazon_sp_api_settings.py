@@ -158,7 +158,31 @@ def setup_custom_fields():
 				insert_after="title",
 				read_only=1,
 				print_hide=1,
-			)
+			),
+			dict(
+				fieldname="amazon_purchase_datetime",
+				label="Amazon Purchase Datetime",
+				fieldtype="Datetime",
+				insert_after="amazon_order_id",
+				read_only=1,
+				print_hide=1,
+			),
+			dict(
+				fieldname="amazon_latest_ship_datetime",
+				label="Amazon Latest Ship Datetime",
+				fieldtype="Datetime",
+				insert_after="amazon_purchase_datetime",
+				read_only=1,
+				print_hide=1,
+			),
+			dict(
+				fieldname="amazon_earliest_ship_datetime",
+				label="Amazon Earliest Ship Datetime",
+				fieldtype="Datetime",
+				insert_after="amazon_latest_ship_datetime",
+				read_only=1,
+				print_hide=1,
+			),
 		],
 	}
 

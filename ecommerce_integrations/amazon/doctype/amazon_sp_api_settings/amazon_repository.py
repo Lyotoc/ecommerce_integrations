@@ -332,11 +332,16 @@ class AmazonRepository:
 
 				new_contact = frappe.new_doc("Contact")
 				new_contact.first_name = order_customer_name
-				new_contact.append("links", {"link_doctype": "Customer", "link_name": new_customer.name})
+			new_contact.append("links", {"link_doctype": "Customer", "link_name": new_customer.name})
 
-				new_contact.insert()
+			new_contact.insert()
 
-				return new_customer.name
+			return new_customer.name
+
+		def parse_amazon_datetime(value):
+			if not value:
+				return
+			return dateutil.parser.parse(value)
 
 		def create_address(order, customer_name) -> str | None:
 			shipping_address = order.get("ShippingAddress")
@@ -387,8 +392,12 @@ class AmazonRepository:
 			customer_name = create_customer(order)
 			create_address(order, customer_name)
 
-			delivery_date = dateutil.parser.parse(order.get("LatestShipDate")).strftime("%Y-%m-%d")
-			transaction_date = dateutil.parser.parse(order.get("PurchaseDate")).strftime("%Y-%m-%d")
+			latest_ship_datetime = parse_amazon_datetime(order.get("LatestShipDate"))
+			earliest_ship_datetime = parse_amazon_datetime(order.get("EarliestShipDate"))
+			purchase_datetime = parse_amazon_datetime(order.get("PurchaseDate"))
+
+			delivery_date = latest_ship_datetime.date() if latest_ship_datetime else None
+			transaction_date = purchase_datetime.date() if purchase_datetime else None
 
 			so = frappe.new_doc("Sales Order")
 			so.amazon_order_id = order_id
@@ -396,6 +405,9 @@ class AmazonRepository:
 			so.customer = customer_name
 			so.delivery_date = delivery_date
 			so.transaction_date = transaction_date
+			so.amazon_latest_ship_datetime = latest_ship_datetime
+			so.amazon_earliest_ship_datetime = earliest_ship_datetime
+			so.amazon_purchase_datetime = purchase_datetime
 			so.company = self.amz_setting.company
 
 			for item in items:
