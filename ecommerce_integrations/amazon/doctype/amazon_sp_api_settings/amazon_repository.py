@@ -6,6 +6,7 @@ import time
 import urllib
 
 import dateutil
+from dateutil import tz
 import frappe
 from frappe import _
 
@@ -341,7 +342,14 @@ class AmazonRepository:
 		def parse_amazon_datetime(value):
 			if not value:
 				return
-			return dateutil.parser.parse(value)
+
+			parsed_datetime = dateutil.parser.parse(value)
+
+			# Datetime fields in Frappe are stored without tzinfo; strip timezone to avoid MySQL errors.
+			if parsed_datetime.tzinfo:
+				parsed_datetime = parsed_datetime.astimezone(tz.UTC).replace(tzinfo=None)
+
+			return parsed_datetime
 
 		def create_address(order, customer_name) -> str | None:
 			shipping_address = order.get("ShippingAddress")
